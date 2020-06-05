@@ -1,0 +1,218 @@
+ldi r0, 3
+shl r0, r0
+shl r0, r0
+inc r0, r0
+shl r0, r0
+jmp r0   
+ldi r0, 5
+shl r0,r0
+shl r0,r0
+ld r1, r0  //r1<-M[0x14]
+adi r0, r0, 4
+shl r0, r0
+adi r0, r0, 3
+ld r2, r0  //r2<-M[0x33]
+inc r0, r0
+ld r3, r0  //r3<-M[0x34]
+inc r0, r0
+ld r4, r0  //r4<-M[0x35]
+inc r0, r0
+ld r5, r0  //r5<-M[0x36]
+inc r0, r0
+ld r6, r0  //r6<-M[0x37]
+inc r0, r0
+ld r7, r0  //r7<-M[0x38]
+ldi r0, 0
+brz r0, 0 
+ldi r0, 5
+shl r0, r0
+shl r0, r0
+shl r0, r0
+shl r0, r0
+adi r0, r0, 7 //1010111 = 87
+ldi r1, 2 
+st r1, r0// start of loop in memory 2
+ldi r0, 6
+shl r0, r0
+shl r0, r0
+shl r0, r0
+shl r0, r0
+shl r0, r0//11000000 = 192
+ldi r1, 3
+st r1, r0// error jump in memory 3
+ldi r0, 4
+shl r0, r0
+shl r0, r0
+shl r0, r0
+adi r0, r0, 5
+shl r0, r0
+shl r0, r0
+shl r0, r0
+shl r0, r0
+shl r0, r0
+adi r0, r0, 5
+shl r0, r0
+shl r0, r0
+adi r0, r0, 2//PID  = 1296 = 1001010010110
+ldi r1, 5
+shl r1, r1
+shl r1, r1 // 0x14 == 10100
+st r1, r0 // overwrite 0x14 with PID
+ldi r1, 4
+shl r1, r1
+mova r3, r1//for later, r3 = 8
+shl r1, r1//r1 = 16
+shl r2, r1//r2 = 32
+dec r1, r1//r1 = 15
+ldi r0, 0
+ld r0, r0 // r0 = M
+sub r1, r1, r0
+sub r2, r0, r2
+brn r1, 4 //If 15 - M < 0, M is valid and skip jump to end
+brn r2, 3 //If M - 32 < 0, M is valid and skip jump to end
+ldi r0, 6
+jmp r0 //Invalid M or N = 0, jump to end
+ldi r1, 1
+ld r1, r1//r1 = N
+brz r1, -6 //If N = 0, No additions are needed and jump to end
+add r2, r1, r0//r2 = M + N
+shl r3, r3
+shl r3, r3
+adi r3, r3, 1//r3 = 33
+sub r2, r2, r3 
+brn r2, 5//if (M+N) - 33 < 0, OP A doesn't go out of bounds and is valid, goes to main loop
+dec r3, r3 // r3 = 32
+sub r1, r3, r0
+ldi r0, 1
+st r0, r1//if (M+N) - 33 >= 0, OP A does go out of bounds and N is adjusted to (20-M) keep this from happening
+ldi r2, 0//start of program loop
+ld r2, r2
+ld r2, r2//r2 = opA
+ldi r7, 0//r7 = count = 1
+ldi r1, 7
+shl r1, r1
+adi r1, r1, 1//r1 = ...01111, mask
+and r3, r1, r2//CHECK ALGORITHM
+ldi r4, 7
+adi r4, r4, 2//r4 = 9
+sub r4, r4, r3
+brn r4, 8//if 9 - operand is negative, operand is not valid bcd and branch to jump to error algorithm
+shr r2, r2
+shr r2, r2
+shr r2, r2
+shr r2, r2//change digit
+brz r2, 6//switch jump//if r2 is empty from shifting, branch to op switch algorithm
+ldi r4, 0
+brz r4, -11//start CHECK ALGORITHM again
+ldi r0, 3 //jump to error
+ld r0, r0 
+jmp r0
+brz r7, 11//op switch algorithm, if count == zero, proceed to ADD ALGORITHM
+dec r7, r7 //count is decremented
+ldi r0, 4
+shl r0, r0
+shl r0, r0
+ldi r4, 0
+ld r4, r4
+add r4, r4, r0 // r4 = opA memory address + 16 = opB memory address
+ld r2, r4 // switch r2 from opA to opB
+ldi r4, 0
+brz r4, -14 //branch to start CHECK ALGORITHM again
+ldi r4, 0 //ADD ALGORITHM
+ld r4, r4
+ldi r0, 4
+shl r0, r0
+shl r0, r0
+add r4, r4, r0//r4 = opA memory address + 16 = opB memory address
+ld r2, r4//r4 = r2 = opB
+ldi r7, 0
+ld r7, r7
+ld r7, r7//r7 = r7 = opA
+ldi r0, 0//r0 holds r6s to be added
+ldi r6, 6//r6 holds what hex digit to add 6 to
+and r3, r1, r2//add loop, r3 is masked op B
+and r4, r1, r7//r4 is masked op A
+add r3, r3, r4 // digits are added
+ldi r4, 7
+adi r4, r4, 2//r4 = 9
+sub r4, r4, r3
+brn r4, 16//if resultant digit is greater or equal to 10, branch to add 6 algorithm
+shr r2, r2
+shr r2, r2
+shr r2, r2
+shr r2, r2//change op b digit
+shr r7, r7
+shr r7, r7
+shr r7, r7
+shr r7, r7//change op a digit
+shl r6, r6
+shl r6, r6
+shl r6, r6
+shl r6, r6//change digit to add 6 to
+brz r6, 10//if r6 == 0, r6 has been shifted empty and all BCD has been checked, branch to end of program loop
+ldi r4, 0
+brz r4, -21//reset add loop
+add r0, r0, r6 //add 6 algorithm
+ldi r4, 4
+shl r4, r4
+shl r4, r4
+add r2, r4, r2//carry over 1 (16) to next digit
+ldi r4, 0
+brz r4, -21//branch back to register shifts in loop
+ldi r1, 0//end of program loop
+ld r1, r1
+ld r1, r1//r1 = op A
+ldi r3, 4
+shl r3, r3
+shl r3, r3//r3 = 16
+ldi r4, 0
+ld r4, r4
+add r4, r4, r3
+ld r4, r4//r4 = op b
+add r1, r1, r4//r1 = opA + opB = hex
+add r0, r0, r1//hex has 6s added necessary digits to change to BCD
+ldi r1, 0
+ld r1, r1
+shl r3, r3//r3 = 32
+add r3, r3, r1//r3 = opA memory address + 32 = result memory address
+st r3, r0//store BCD result into memory
+ldi r0, 0
+ld r0, r0
+inc r0, r0 
+ldi r1, 0
+st r1, r0//increment M and store
+ldi r0, 1
+ld r0, r0
+dec r0, r0 
+ldi r1, 1
+st r1, r0//decrement N and store
+brz r0, 28//if N == 0, branch to end
+ldi r0, 2 
+ld r0, r0//r0 = instruction address of beginning of program loop
+jmp r0//repeat loop
+ldi r3, 4//error algorithm
+shl r3, r3
+shl r3, r3
+shl r3, r3
+ldi r1, 0
+ld r1, r1
+add r3, r3, r1//r3 = op A memory address + 32 = result memory address
+ldi r0, 0
+not r0, r0//r0 = FFFF
+st r3, r0//store FFFF in result memory address
+ldi r0, 0
+ld r0, r0
+inc r0, r0
+ldi r1, 0
+st r1, r0//increment M and store
+ldi r0, 1
+ld r0, r0
+dec r0, r0 
+ldi r1, 1
+st r1, r0//decrement N and store
+brz r0, 4//if N == 0, branch to end
+ldi r0, 2 //r0 = instruction address of beginning of program loop
+ld r0, r0//repeat loop
+jmp r0
+ldi r0, 6 //end program
+jmp r0
